@@ -1,0 +1,42 @@
+name: 🎨 Convert Assets
+
+on:
+  push:
+    paths:
+      - "assets/**/*.svg"
+  workflow_dispatch:
+
+jobs:
+  convert-assets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Convert SVG Assets
+        id: convert
+        uses: kjanat/svg-converter-action@v1.0.8
+        with:
+          svg-path: "assets/logo.svg"
+          output-dir: "public/assets/"
+          formats: "ico,png,react,react-native"
+          png-sizes: "16,32,64,128,256,512"
+          react-typescript: "true"
+          base-name: "AppLogo"
+
+      - name: Show conversion results
+        run: |
+          echo "Files created: ${{ steps.convert.outputs.files-created }}"
+          echo "Summary:"
+          echo "${{ steps.convert.outputs.summary }}"
+
+      - name: Commit generated assets
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add public/assets/
+          git diff --staged --quiet || git commit -m "🎨 Auto-generate assets from SVG"
+          git push
